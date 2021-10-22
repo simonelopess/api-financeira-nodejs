@@ -108,5 +108,16 @@ app.post('/withdraw', verifyExistsAccountCPF, (request, response) => {
 
 })
 
+//Lista extrato bancário por data
+app.get('/statement/date', verifyExistsAccountCPF ,(request, response) => {    
+    const { customer } = request;
+    const {date} = request.query;
+    
+    const dateFormat = new Date(date + " 00:00");
+
+    const statement = customer.statement.filter((statement) => statement.created_at.toDateString() === new Date(dateFormat).toDateString) // formata data
+    
+    return response.json(statement);
+})
 app.listen(3333);
 
