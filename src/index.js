@@ -3,14 +3,27 @@ const { v4: uuidv4 } = require('uuid');
 
 const app = express();
 
-app.use(express.json()); //necessário para recebimento do Json
+app.use(express.json());
 
 const customers = [];
 
-// cpf - String
-// name - string
-// id - uuid
-// statement []
+//Midleware
+
+function verifyExistsAccountCPF(request, response, next) {
+    const { cpf } = request.headers;
+
+    //verifica se existe um extrato bancário do cliente
+    const customer = customers.find(customer => customer.cpf === cpf);
+
+    if(!customer) {
+        return response.status(400).json({ error: 'Customer not found'})
+    }
+
+    request.customer = customer; //repassa o customer para os recursos
+    return next();
+
+}
+
 
 app.post('/account', (request, response) => {
     const { cpf, name } = request.body;
@@ -34,18 +47,9 @@ app.post('/account', (request, response) => {
     return response.status(201).send()
 })
 
-//app.get('/statement/:cpf', (request, response) => {
-    // const { cpf } = request.params; exemplo usando params
-    app.get('/statement', (request, response) => {
-    const { cpf } = request.headers; //exmplo usando headers
 
-
-    //verifica se existe um extrato bancário do cliente
-    const customer = customers.find(customer => customer.cpf === cpf);
-
-    if(!customer) {
-        return response.status(400).json({ error: 'Customer not found'})
-    }
+app.get('/statement', verifyExistsAccountCPF ,(request, response) => {    
+    const { customer } = request;
     return response.json(customer.statement);
 })
 app.listen(3333);
